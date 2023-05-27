@@ -15,11 +15,13 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
+use App\State\CurrentUserProvider;
 use App\State\UserPasswordHasher;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiResource(
@@ -27,6 +29,10 @@ use Symfony\Component\Validator\Constraints as Assert;
         new GetCollection(),
         new Post(processor: UserPasswordHasher::class, validationContext: ['groups' => ['Default', 'user:create']]),
         new Get(),
+        new Get(
+            uriTemplate: '/me',
+            provider: CurrentUserProvider::class
+        ),
         new Put(processor: UserPasswordHasher::class),
         new Patch(processor: UserPasswordHasher::class),
         new Delete(),
@@ -56,6 +62,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[Assert\NotBlank(groups: ['user:create'])]
     #[Groups(['user:create', 'user:update'])]
+    #[SerializedName('password')]
     private ?string $plainPassword = null;
 
     #[ORM\Column(type: 'json')]
@@ -64,7 +71,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'creator', targetEntity: Project::class)]
     private Collection $projects;
 
+    #[Assert\NotBlank]
     #[ORM\Column(length: 100)]
+    #[Groups(['user:create', 'user:update', 'user:read'])]
     private ?string $name = null;
 
     public function __construct()
