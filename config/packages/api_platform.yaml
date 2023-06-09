@@ -4,6 +4,7 @@ api_platform:
     # Mercure integration, remove if unwanted
     mercure: ~
     # Good cache defaults for REST APIs
+    path_segment_name_generator: api_platform.path_segment_name_generator.dash
     defaults:
         stateless: true
         cache_headers:
